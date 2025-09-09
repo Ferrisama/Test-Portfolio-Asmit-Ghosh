@@ -45,3 +45,9 @@ type Query struct {
 	Limit     int        `json:"limit"`
 	Offset    int        `json:"offset"`
 }
+
+// EquityPoint represents a point in the equity curve for charting.
+type EquityPoint struct {
+	Time  string  `json:"t"`
+	Value float64 `json:"v"`
+}

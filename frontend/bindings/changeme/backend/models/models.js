@@ -14,181 +14,229 @@ import * as time$0 from "../../../time/models.js";
  * AnalyticsSummary represents summary metrics calculated over a set of trades.
  */
 export class AnalyticsSummary {
-    /**
-     * Creates a new AnalyticsSummary instance.
-     * @param {Partial<AnalyticsSummary>} [$$source = {}] - The source object to create the AnalyticsSummary.
-     */
-    constructor($$source = {}) {
-        if (!("winRate" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["winRate"] = 0;
-        }
-        if (!("profitFactor" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["profitFactor"] = 0;
-        }
-        if (!("maxDD" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["maxDD"] = 0;
-        }
-        if (!("sharpe" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["sharpe"] = 0;
-        }
-        if (!("sortino" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["sortino"] = 0;
-        }
-        if (!("expectancy" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["expectancy"] = 0;
-        }
-
-        Object.assign(this, $$source);
+  /**
+   * Creates a new AnalyticsSummary instance.
+   * @param {Partial<AnalyticsSummary>} [$$source = {}] - The source object to create the AnalyticsSummary.
+   */
+  constructor($$source = {}) {
+    if (!("winRate" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["winRate"] = 0;
+    }
+    if (!("profitFactor" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["profitFactor"] = 0;
+    }
+    if (!("maxDD" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["maxDD"] = 0;
+    }
+    if (!("sharpe" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["sharpe"] = 0;
+    }
+    if (!("sortino" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["sortino"] = 0;
+    }
+    if (!("expectancy" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["expectancy"] = 0;
     }
 
-    /**
-     * Creates a new AnalyticsSummary instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {AnalyticsSummary}
-     */
-    static createFrom($$source = {}) {
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new AnalyticsSummary(/** @type {Partial<AnalyticsSummary>} */($$parsedSource));
+    Object.assign(this, $$source);
+  }
+
+  /**
+   * Creates a new AnalyticsSummary instance from a string or object.
+   * @param {any} [$$source = {}]
+   * @returns {AnalyticsSummary}
+   */
+  static createFrom($$source = {}) {
+    let $$parsedSource =
+      typeof $$source === "string" ? JSON.parse($$source) : $$source;
+    return new AnalyticsSummary(
+      /** @type {Partial<AnalyticsSummary>} */ ($$parsedSource)
+    );
+  }
+}
+
+/**
+ * EquityPoint represents a point in the equity curve for charting.
+ */
+export class EquityPoint {
+  /**
+   * Creates a new EquityPoint instance.
+   * @param {Partial<EquityPoint>} [$$source = {}] - The source object to create the EquityPoint.
+   */
+  constructor($$source = {}) {
+    if (!("t" in $$source)) {
+      /**
+       * @member
+       * @type {string}
+       */
+      this["t"] = "";
     }
+    if (!("v" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["v"] = 0;
+    }
+
+    Object.assign(this, $$source);
+  }
+
+  /**
+   * Creates a new EquityPoint instance from a string or object.
+   * @param {any} [$$source = {}]
+   * @returns {EquityPoint}
+   */
+  static createFrom($$source = {}) {
+    let $$parsedSource =
+      typeof $$source === "string" ? JSON.parse($$source) : $$source;
+    return new EquityPoint(
+      /** @type {Partial<EquityPoint>} */ ($$parsedSource)
+    );
+  }
 }
 
 /**
  * ImportReport summarizes the result of an import operation.
  */
 export class ImportReport {
-    /**
-     * Creates a new ImportReport instance.
-     * @param {Partial<ImportReport>} [$$source = {}] - The source object to create the ImportReport.
-     */
-    constructor($$source = {}) {
-        if (!("imported" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["imported"] = 0;
-        }
-        if (!("skipped" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["skipped"] = 0;
-        }
-        if (!("errors" in $$source)) {
-            /**
-             * @member
-             * @type {string[]}
-             */
-            this["errors"] = [];
-        }
-
-        Object.assign(this, $$source);
+  /**
+   * Creates a new ImportReport instance.
+   * @param {Partial<ImportReport>} [$$source = {}] - The source object to create the ImportReport.
+   */
+  constructor($$source = {}) {
+    if (!("imported" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["imported"] = 0;
+    }
+    if (!("skipped" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["skipped"] = 0;
+    }
+    if (!("errors" in $$source)) {
+      /**
+       * @member
+       * @type {string[]}
+       */
+      this["errors"] = [];
     }
 
-    /**
-     * Creates a new ImportReport instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {ImportReport}
-     */
-    static createFrom($$source = {}) {
-        const $$createField2_0 = $$createType0;
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("errors" in $$parsedSource) {
-            $$parsedSource["errors"] = $$createField2_0($$parsedSource["errors"]);
-        }
-        return new ImportReport(/** @type {Partial<ImportReport>} */($$parsedSource));
+    Object.assign(this, $$source);
+  }
+
+  /**
+   * Creates a new ImportReport instance from a string or object.
+   * @param {any} [$$source = {}]
+   * @returns {ImportReport}
+   */
+  static createFrom($$source = {}) {
+    const $$createField2_0 = $$createType0;
+    let $$parsedSource =
+      typeof $$source === "string" ? JSON.parse($$source) : $$source;
+    if ("errors" in $$parsedSource) {
+      $$parsedSource["errors"] = $$createField2_0($$parsedSource["errors"]);
     }
+    return new ImportReport(
+      /** @type {Partial<ImportReport>} */ ($$parsedSource)
+    );
+  }
 }
 
 /**
  * Query represents the filters from the UI.
  */
 export class Query {
-    /**
-     * Creates a new Query instance.
-     * @param {Partial<Query>} [$$source = {}] - The source object to create the Query.
-     */
-    constructor($$source = {}) {
-        if (!("symbol" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["symbol"] = "";
-        }
-        if (!("side" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["side"] = "";
-        }
-        if (!("startTime" in $$source)) {
-            /**
-             * @member
-             * @type {time$0.Time | null}
-             */
-            this["startTime"] = null;
-        }
-        if (!("endTime" in $$source)) {
-            /**
-             * @member
-             * @type {time$0.Time | null}
-             */
-            this["endTime"] = null;
-        }
-        if (!("limit" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["limit"] = 0;
-        }
-        if (!("offset" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["offset"] = 0;
-        }
-
-        Object.assign(this, $$source);
+  /**
+   * Creates a new Query instance.
+   * @param {Partial<Query>} [$$source = {}] - The source object to create the Query.
+   */
+  constructor($$source = {}) {
+    if (!("symbol" in $$source)) {
+      /**
+       * @member
+       * @type {string}
+       */
+      this["symbol"] = "";
+    }
+    if (!("side" in $$source)) {
+      /**
+       * @member
+       * @type {string}
+       */
+      this["side"] = "";
+    }
+    if (!("startTime" in $$source)) {
+      /**
+       * @member
+       * @type {time$0.Time | null}
+       */
+      this["startTime"] = null;
+    }
+    if (!("endTime" in $$source)) {
+      /**
+       * @member
+       * @type {time$0.Time | null}
+       */
+      this["endTime"] = null;
+    }
+    if (!("limit" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["limit"] = 0;
+    }
+    if (!("offset" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["offset"] = 0;
     }
 
-    /**
-     * Creates a new Query instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {Query}
-     */
-    static createFrom($$source = {}) {
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new Query(/** @type {Partial<Query>} */($$parsedSource));
-    }
+    Object.assign(this, $$source);
+  }
+
+  /**
+   * Creates a new Query instance from a string or object.
+   * @param {any} [$$source = {}]
+   * @returns {Query}
+   */
+  static createFrom($$source = {}) {
+    let $$parsedSource =
+      typeof $$source === "string" ? JSON.parse($$source) : $$source;
+    return new Query(/** @type {Partial<Query>} */ ($$parsedSource));
+  }
 }
 
 /**
@@ -196,109 +244,110 @@ export class Query {
  * All timestamps are stored in UTC.
  */
 export class Trade {
-    /**
-     * Creates a new Trade instance.
-     * @param {Partial<Trade>} [$$source = {}] - The source object to create the Trade.
-     */
-    constructor($$source = {}) {
-        if (!("id" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["id"] = "";
-        }
-        if (!("symbol" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["symbol"] = "";
-        }
-        if (!("side" in $$source)) {
-            /**
-             * "long" or "short"
-             * @member
-             * @type {string}
-             */
-            this["side"] = "";
-        }
-        if (!("entry_time" in $$source)) {
-            /**
-             * @member
-             * @type {time$0.Time}
-             */
-            this["entry_time"] = null;
-        }
-        if (/** @type {any} */(false)) {
-            /**
-             * @member
-             * @type {time$0.Time | null | undefined}
-             */
-            this["exit_time"] = undefined;
-        }
-        if (!("entry_price" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["entry_price"] = 0;
-        }
-        if (/** @type {any} */(false)) {
-            /**
-             * @member
-             * @type {number | null | undefined}
-             */
-            this["exit_price"] = undefined;
-        }
-        if (!("quantity" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["quantity"] = 0;
-        }
-        if (!("fees" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["fees"] = 0;
-        }
-        if (!("notes" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["notes"] = "";
-        }
-        if (!("created_at" in $$source)) {
-            /**
-             * @member
-             * @type {time$0.Time}
-             */
-            this["created_at"] = null;
-        }
-        if (!("updated_at" in $$source)) {
-            /**
-             * @member
-             * @type {time$0.Time}
-             */
-            this["updated_at"] = null;
-        }
-
-        Object.assign(this, $$source);
+  /**
+   * Creates a new Trade instance.
+   * @param {Partial<Trade>} [$$source = {}] - The source object to create the Trade.
+   */
+  constructor($$source = {}) {
+    if (!("id" in $$source)) {
+      /**
+       * @member
+       * @type {string}
+       */
+      this["id"] = "";
+    }
+    if (!("symbol" in $$source)) {
+      /**
+       * @member
+       * @type {string}
+       */
+      this["symbol"] = "";
+    }
+    if (!("side" in $$source)) {
+      /**
+       * "long" or "short"
+       * @member
+       * @type {string}
+       */
+      this["side"] = "";
+    }
+    if (!("entry_time" in $$source)) {
+      /**
+       * @member
+       * @type {time$0.Time}
+       */
+      this["entry_time"] = null;
+    }
+    if (/** @type {any} */ (false)) {
+      /**
+       * @member
+       * @type {time$0.Time | null | undefined}
+       */
+      this["exit_time"] = undefined;
+    }
+    if (!("entry_price" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["entry_price"] = 0;
+    }
+    if (/** @type {any} */ (false)) {
+      /**
+       * @member
+       * @type {number | null | undefined}
+       */
+      this["exit_price"] = undefined;
+    }
+    if (!("quantity" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["quantity"] = 0;
+    }
+    if (!("fees" in $$source)) {
+      /**
+       * @member
+       * @type {number}
+       */
+      this["fees"] = 0;
+    }
+    if (!("notes" in $$source)) {
+      /**
+       * @member
+       * @type {string}
+       */
+      this["notes"] = "";
+    }
+    if (!("created_at" in $$source)) {
+      /**
+       * @member
+       * @type {time$0.Time}
+       */
+      this["created_at"] = null;
+    }
+    if (!("updated_at" in $$source)) {
+      /**
+       * @member
+       * @type {time$0.Time}
+       */
+      this["updated_at"] = null;
     }
 
-    /**
-     * Creates a new Trade instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {Trade}
-     */
-    static createFrom($$source = {}) {
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new Trade(/** @type {Partial<Trade>} */($$parsedSource));
-    }
+    Object.assign(this, $$source);
+  }
+
+  /**
+   * Creates a new Trade instance from a string or object.
+   * @param {any} [$$source = {}]
+   * @returns {Trade}
+   */
+  static createFrom($$source = {}) {
+    let $$parsedSource =
+      typeof $$source === "string" ? JSON.parse($$source) : $$source;
+    return new Trade(/** @type {Partial<Trade>} */ ($$parsedSource));
+  }
 }
 
 // Private type creation functions

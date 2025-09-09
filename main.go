@@ -33,11 +33,11 @@ func main() {
 	// Create a new Wails application by providing the necessary options.
 	// Variables 'Name' and 'Description' are for application metadata.
 	// 'Assets' configures the asset server with the 'FS' variable pointing to the frontend files.
-	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
+	// 'Services' is a list of Go struct instances. The frontend has access to the methods of these instances.
 	// 'Mac' options tailor the application when running an macOS.
 	app := application.New(application.Options{
 		Name:        "portfolio",
-		Description: "A demo of using raw HTML & CSS",
+		Description: "Trading Journal - A demo of using raw HTML & CSS",
 		Services: []application.Service{
 			application.NewService(js),
 		},
@@ -69,8 +69,8 @@ func main() {
 	// 'Mac' options tailor the window when running on macOS.
 	// 'BackgroundColour' is the background colour of the window.
 	// 'URL' is the URL that will be loaded into the webview.
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title: "Window 1",
+	_ = app.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
+		Title: "Trading Journal",
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,
@@ -85,7 +85,7 @@ func main() {
 	go func() {
 		for {
 			now := time.Now().Format(time.RFC1123)
-			app.Event.Emit("time", now)
+			app.EmitEvent("time", now)
 			time.Sleep(time.Second)
 		}
 	}()

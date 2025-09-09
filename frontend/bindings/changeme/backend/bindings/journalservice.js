@@ -16,7 +16,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as models$0 from "../models/models.js";
 
 /**
- * GetAnalytics calculates analytics for the given query. TODO(impl)
+ * GetAnalytics calculates analytics for the given query with decimal precision.
  * @param {models$0.Query} q
  * @returns {$CancellablePromise<models$0.AnalyticsSummary>}
  */
@@ -27,13 +27,25 @@ export function GetAnalytics(q) {
 }
 
 /**
- * ImportCSV imports trades from a CSV payload string. TODO(impl): dedupe on (symbol, entry_time, exit_time, entry_price, qty)
+ * GetEquityPoints returns equity curve points for charting.
+ * This creates a proper cumulative P&L curve over time using only closed trades.
+ * @param {models$0.Query} q
+ * @returns {$CancellablePromise<models$0.EquityPoint[]>}
+ */
+export function GetEquityPoints(q) {
+    return $Call.ByID(869820143, q).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType2($result);
+    }));
+}
+
+/**
+ * ImportCSV imports trades from a CSV payload string with deduplication and UTC conversion.
  * @param {string} csvPayload
  * @returns {$CancellablePromise<models$0.ImportReport>}
  */
 export function ImportCSV(csvPayload) {
     return $Call.ByID(3831720096, csvPayload).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType1($result);
+        return $$createType3($result);
     }));
 }
 
@@ -44,7 +56,7 @@ export function ImportCSV(csvPayload) {
  */
 export function ListTrades(q) {
     return $Call.ByID(2167639782, q).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -58,6 +70,8 @@ export function Ping() {
 
 // Private type creation functions
 const $$createType0 = models$0.AnalyticsSummary.createFrom;
-const $$createType1 = models$0.ImportReport.createFrom;
-const $$createType2 = models$0.Trade.createFrom;
-const $$createType3 = $Create.Array($$createType2);
+const $$createType1 = models$0.EquityPoint.createFrom;
+const $$createType2 = $Create.Array($$createType1);
+const $$createType3 = models$0.ImportReport.createFrom;
+const $$createType4 = models$0.Trade.createFrom;
+const $$createType5 = $Create.Array($$createType4);
