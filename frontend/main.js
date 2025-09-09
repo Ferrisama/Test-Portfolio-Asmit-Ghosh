@@ -4,18 +4,28 @@ import * as Models from "./bindings/changeme/backend/models/models.js";
 
 const timeElement = document.getElementById("time");
 let equityChart = null;
+let allTrades = [];
+let pagination = {
+  currentPage: 1,
+  pageSize: 25,
+  totalTrades: 0,
+  totalPages: 1,
+};
 
-// Wire Ping button
-
+// Connection test functionality
 const pingBtn = document.getElementById("ping-btn");
 const pingResult = document.getElementById("ping-result");
-if (pingBtn && pingResult) {
+const statusIndicator = document.getElementById("status-indicator");
+
+if (pingBtn && pingResult && statusIndicator) {
   pingBtn.addEventListener("click", async () => {
     try {
       const v = await Journal.Ping();
-      pingResult.innerText = `version: ${v}`;
+      pingResult.innerText = `Connected - Version: ${v}`;
+      statusIndicator.classList.add("connected");
     } catch (e) {
-      pingResult.innerText = "ping failed";
+      pingResult.innerText = "Connection failed";
+      statusIndicator.classList.remove("connected");
     }
   });
 }
@@ -26,7 +36,7 @@ let currentQuery = Models.Query.createFrom({
   side: "",
   startTime: undefined,
   endTime: undefined,
-  limit: 1000,
+  limit: 10000, // Get all trades for client-side pagination
   offset: 0,
 });
 
@@ -42,11 +52,96 @@ function buildQueryFromFilters() {
     side: side,
     startTime: start ? new Date(start).toISOString() : undefined,
     endTime: end ? new Date(end).toISOString() : undefined,
-    limit: 1000,
+    limit: 10000,
     offset: 0,
   });
 
   return currentQuery;
+}
+
+// Pagination functions
+function updatePaginationInfo() {
+  const info = document.getElementById("pagination-info");
+  const start = (pagination.currentPage - 1) * pagination.pageSize + 1;
+  const end = Math.min(
+    pagination.currentPage * pagination.pageSize,
+    pagination.totalTrades
+  );
+
+  if (pagination.totalTrades === 0) {
+    info.textContent = "No trades found";
+  } else {
+    info.textContent = `Showing ${start}-${end} of ${pagination.totalTrades} trades`;
+  }
+}
+
+function updatePaginationButtons() {
+  const container = document.getElementById("pagination-buttons");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (pagination.totalPages <= 1) return;
+
+  // Previous button
+  const prevBtn = document.createElement("button");
+  prevBtn.textContent = "Previous";
+  prevBtn.disabled = pagination.currentPage === 1;
+  prevBtn.addEventListener("click", () => {
+    if (pagination.currentPage > 1) {
+      pagination.currentPage--;
+      renderCurrentPage();
+    }
+  });
+  container.appendChild(prevBtn);
+
+  // Page numbers
+  const maxVisiblePages = 5;
+  let startPage = Math.max(
+    1,
+    pagination.currentPage - Math.floor(maxVisiblePages / 2)
+  );
+  let endPage = Math.min(
+    pagination.totalPages,
+    startPage + maxVisiblePages - 1
+  );
+
+  if (endPage - startPage < maxVisiblePages - 1) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.className = i === pagination.currentPage ? "active" : "";
+    pageBtn.addEventListener("click", () => {
+      pagination.currentPage = i;
+      renderCurrentPage();
+    });
+    container.appendChild(pageBtn);
+  }
+
+  // Next button
+  const nextBtn = document.createElement("button");
+  nextBtn.textContent = "Next";
+  nextBtn.disabled = pagination.currentPage === pagination.totalPages;
+  nextBtn.addEventListener("click", () => {
+    if (pagination.currentPage < pagination.totalPages) {
+      pagination.currentPage++;
+      renderCurrentPage();
+    }
+  });
+  container.appendChild(nextBtn);
+}
+
+function renderCurrentPage() {
+  const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
+  const endIndex = startIndex + pagination.pageSize;
+  const pageTrades = allTrades.slice(startIndex, endIndex);
+
+  renderTradesTable(pageTrades);
+  updatePaginationInfo();
+  updatePaginationButtons();
 }
 
 // Function to update analytics
@@ -56,8 +151,8 @@ async function updateAnalytics(query) {
     setMetric("winRate", (a.winRate * 100).toFixed(1) + "%");
     setMetric("profitFactor", a.profitFactor?.toFixed(2));
     setMetric("maxDD", a.maxDD?.toFixed(2) + "%");
-    setMetric("sharpe", a.sharpe?.toFixed(2));
-    setMetric("sortino", a.sortino?.toFixed(2));
+    setMetric("sharpe", a.sharpe?.toFixed(3));
+    setMetric("sortino", a.sortino?.toFixed(3));
     setMetric("expectancy", a.expectancy?.toFixed(2));
   } catch (e) {
     console.error("Failed to update analytics:", e);
@@ -71,11 +166,15 @@ async function updateAnalytics(query) {
   }
 }
 
-// Function to update trades table
+// Function to update trades with pagination
 async function updateTradesTable(query) {
   try {
-    const trades = await Journal.ListTrades(query);
-    renderTradesTable(trades);
+    allTrades = await Journal.ListTrades(query);
+    pagination.totalTrades = allTrades.length;
+    pagination.totalPages = Math.ceil(allTrades.length / pagination.pageSize);
+    pagination.currentPage = 1; // Reset to first page
+
+    renderCurrentPage();
   } catch (e) {
     console.error("Failed to load trades:", e);
     const tbody = document.getElementById("trades-tbody");
@@ -92,8 +191,13 @@ function renderTradesTable(trades) {
   if (!tbody) return;
 
   if (!trades || trades.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="10" style="text-align: center; color: #a0aec0;">No trades found</td></tr>';
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="text-align: center; color: #718096; padding: 40px;">
+          No trades found for the current filters
+        </td>
+      </tr>
+    `;
     return;
   }
 
@@ -116,7 +220,7 @@ function renderTradesTable(trades) {
           pnlValue = (exitPrice - entryPrice) * qty - fees;
         }
 
-        pnl = pnlValue.toFixed(2);
+        pnl = "$" + pnlValue.toFixed(2);
         pnlClass = pnlValue >= 0 ? "pnl-positive" : "pnl-negative";
       } else {
         pnl = "-";
@@ -124,32 +228,30 @@ function renderTradesTable(trades) {
 
       // Format dates
       const entryTime = formatDateTime(trade.entry_time);
-      const exitTime = trade.exit_time ? formatDateTime(trade.exit_time) : "-";
+      const exitTime = trade.exit_time
+        ? formatDateTime(trade.exit_time)
+        : "Open";
 
       // Format side with color
       const sideClass =
         trade.side.toLowerCase() === "long" ? "side-long" : "side-short";
 
       return `
-            <tr>
-                <td><strong>${escapeHtml(trade.symbol)}</strong></td>
-                <td><span class="${sideClass}">${escapeHtml(
+        <tr>
+          <td><strong>${escapeHtml(trade.symbol)}</strong></td>
+          <td><span class="${sideClass}">${escapeHtml(
         trade.side.toUpperCase()
       )}</span></td>
-                <td class="datetime">${entryTime}</td>
-                <td class="datetime">${exitTime}</td>
-                <td class="number">${trade.entry_price.toFixed(2)}</td>
-                <td class="number">${
-                  trade.exit_price ? trade.exit_price.toFixed(2) : "-"
-                }</td>
-                <td class="number">${trade.quantity.toFixed(2)}</td>
-                <td class="number">${
-                  trade.fees ? trade.fees.toFixed(2) : "0.00"
-                }</td>
-                <td class="number ${pnlClass}">${pnl}</td>
-                <td>${escapeHtml(trade.notes || "")}</td>
-            </tr>
-        `;
+          <td>${entryTime}</td>
+          <td>${exitTime}</td>
+          <td>$${trade.entry_price.toFixed(2)}</td>
+          <td>${trade.exit_price ? "$" + trade.exit_price.toFixed(2) : "-"}</td>
+          <td>${trade.quantity.toFixed(2)}</td>
+          <td>$${trade.fees ? trade.fees.toFixed(2) : "0.00"}</td>
+          <td class="${pnlClass}">${pnl}</td>
+          <td>${escapeHtml(trade.notes || "")}</td>
+        </tr>
+      `;
     })
     .join("");
 }
@@ -179,24 +281,41 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Filters → Query → GetAnalytics + ListTrades
-const applyBtn = document.getElementById("apply-filters");
-if (applyBtn) {
-  // Remove existing listeners
-  applyBtn.replaceWith(applyBtn.cloneNode(true));
-  const newApplyBtn = document.getElementById("apply-filters");
+// Apply filters function
+async function applyFilters() {
+  console.log("Applying filters...");
+  const query = buildQueryFromFilters();
 
-  newApplyBtn.addEventListener("click", async () => {
-    console.log("🔘 Apply Filters button clicked");
-    await debugApplyFilters();
-  });
+  try {
+    // Update analytics
+    await updateAnalytics(query);
+
+    // Update trades table with pagination
+    await updateTradesTable(query);
+
+    // Update equity chart
+    await updateEquityChart(query);
+  } catch (error) {
+    console.error("Error applying filters:", error);
+  }
 }
 
-// Refresh trades button
-const refreshTradesBtn = document.getElementById("refresh-trades");
-if (refreshTradesBtn) {
-  refreshTradesBtn.addEventListener("click", async () => {
-    await updateTradesTable(currentQuery);
+// Wire Apply Filters button
+const applyBtn = document.getElementById("apply-filters");
+if (applyBtn) {
+  applyBtn.addEventListener("click", applyFilters);
+}
+
+// Page size change handler
+const pageSizeSelect = document.getElementById("page-size");
+if (pageSizeSelect) {
+  pageSizeSelect.addEventListener("change", (e) => {
+    pagination.pageSize = parseInt(e.target.value);
+    pagination.totalPages = Math.ceil(
+      pagination.totalTrades / pagination.pageSize
+    );
+    pagination.currentPage = 1; // Reset to first page
+    renderCurrentPage();
   });
 }
 
@@ -205,25 +324,20 @@ function setMetric(name, value) {
   if (el) el.innerText = value ?? "-";
 }
 
-// Initialize the equity chart (add this to your DOMContentLoaded event)
+// Initialize the equity chart
 function initEquityChart() {
-  console.log(" Initializing equity chart...");
+  console.log("Initializing equity chart...");
 
   const canvas = document.getElementById("equityChart");
   if (!canvas) {
-    console.error(" Equity chart canvas element not found!");
+    console.error("Equity chart canvas element not found!");
     return;
   }
 
-  console.log(" Found equity chart canvas element");
-
-  // Check if Chart.js is loaded
   if (typeof Chart === "undefined") {
-    console.error(" Chart.js is not loaded!");
+    console.error("Chart.js is not loaded!");
     return;
   }
-
-  console.log(" Chart.js is loaded");
 
   try {
     const ctx = canvas.getContext("2d");
@@ -235,12 +349,12 @@ function initEquityChart() {
           {
             label: "Cumulative P&L",
             data: [0],
-            borderColor: "#007acc",
-            backgroundColor: "rgba(0, 122, 204, 0.05)",
-            tension: 0.2,
+            borderColor: "#667eea",
+            backgroundColor: "rgba(102, 126, 234, 0.1)",
+            tension: 0.4,
             pointRadius: 4,
             pointHoverRadius: 6,
-            pointBackgroundColor: "#007acc",
+            pointBackgroundColor: "#667eea",
             pointBorderColor: "#ffffff",
             pointBorderWidth: 2,
             fill: true,
@@ -258,7 +372,7 @@ function initEquityChart() {
             backgroundColor: "rgba(0, 0, 0, 0.8)",
             titleColor: "#ffffff",
             bodyColor: "#ffffff",
-            cornerRadius: 8,
+            cornerRadius: 12,
             displayColors: false,
             callbacks: {
               label: function (context) {
@@ -273,28 +387,20 @@ function initEquityChart() {
             title: {
               display: true,
               text: "Trade Sequence",
-              font: {
-                size: 14,
-                weight: "bold",
-              },
+              color: "#4a5568",
+              font: { size: 14, weight: "600" },
             },
-            grid: {
-              color: "rgba(0, 0, 0, 0.1)",
-            },
+            grid: { color: "rgba(255, 255, 255, 0.3)" },
           },
           y: {
             display: true,
             title: {
               display: true,
               text: "Cumulative P&L ($)",
-              font: {
-                size: 14,
-                weight: "bold",
-              },
+              color: "#4a5568",
+              font: { size: 14, weight: "600" },
             },
-            grid: {
-              color: "rgba(0, 0, 0, 0.1)",
-            },
+            grid: { color: "rgba(255, 255, 255, 0.3)" },
             ticks: {
               callback: function (value) {
                 return "$" + value.toFixed(2);
@@ -309,44 +415,26 @@ function initEquityChart() {
       },
     });
 
-    console.log(" Equity chart initialized successfully");
+    console.log("Equity chart initialized successfully");
   } catch (error) {
-    console.error(" Error initializing equity chart:", error);
+    console.error("Error initializing equity chart:", error);
   }
 }
 
 // Update equity chart with new data
 async function updateEquityChart(query) {
-  console.log(" Updating equity chart with query:", query);
+  console.log("Updating equity chart with query:", query);
 
   if (!equityChart) {
-    console.error(" Equity chart not initialized!");
+    console.error("Equity chart not initialized!");
     return;
   }
 
   try {
-    console.log(" Calling Journal.GetEquityPoints...");
-
-    // Check if Journal is available
-    if (typeof Journal === "undefined") {
-      console.error(" Journal service not available!");
-      return;
-    }
-
     const equityPoints = await Journal.GetEquityPoints(query);
-    console.log(" Received equity points:", equityPoints);
+    console.log("Received equity points:", equityPoints);
 
-    if (!equityPoints) {
-      console.warn(" No equity points returned (null/undefined)");
-      // Show empty state
-      equityChart.data.labels = ["No data"];
-      equityChart.data.datasets[0].data = [0];
-      equityChart.update();
-      return;
-    }
-
-    if (equityPoints.length === 0) {
-      console.warn(" Empty equity points array");
+    if (!equityPoints || equityPoints.length === 0) {
       // Show empty state
       equityChart.data.labels = ["No closed trades"];
       equityChart.data.datasets[0].data = [0];
@@ -354,24 +442,16 @@ async function updateEquityChart(query) {
       return;
     }
 
-    console.log(` Processing ${equityPoints.length} equity points`);
-
     // Process the data
     const labels = [];
     const data = [];
 
     equityPoints.forEach((point, index) => {
-      console.log(`Point ${index}:`, { time: point.t, value: point.v });
-
       const date = new Date(point.t);
       const label = `${index + 1}: ${date.toLocaleDateString()}`;
-
       labels.push(label);
       data.push(point.v);
     });
-
-    console.log(" Chart labels:", labels);
-    console.log(" Chart data:", data);
 
     // Update chart
     equityChart.data.labels = labels;
@@ -379,25 +459,20 @@ async function updateEquityChart(query) {
 
     // Color coding based on final P&L
     const finalPnL = data[data.length - 1] || 0;
-    console.log(` Final P&L: $${finalPnL}`);
-
     if (finalPnL >= 0) {
-      equityChart.data.datasets[0].borderColor = "#28a745";
-      equityChart.data.datasets[0].backgroundColor = "rgba(40, 167, 69, 0.1)";
-      equityChart.data.datasets[0].pointBackgroundColor = "#28a745";
-      console.log(" Chart colored green (profitable)");
+      equityChart.data.datasets[0].borderColor = "#38a169";
+      equityChart.data.datasets[0].backgroundColor = "rgba(56, 161, 105, 0.1)";
+      equityChart.data.datasets[0].pointBackgroundColor = "#38a169";
     } else {
-      equityChart.data.datasets[0].borderColor = "#dc3545";
-      equityChart.data.datasets[0].backgroundColor = "rgba(220, 53, 69, 0.1)";
-      equityChart.data.datasets[0].pointBackgroundColor = "#dc3545";
-      console.log(" Chart colored red (loss)");
+      equityChart.data.datasets[0].borderColor = "#e53e3e";
+      equityChart.data.datasets[0].backgroundColor = "rgba(229, 62, 62, 0.1)";
+      equityChart.data.datasets[0].pointBackgroundColor = "#e53e3e";
     }
 
     equityChart.update();
-    console.log(" Chart updated successfully");
+    console.log("Chart updated successfully");
   } catch (error) {
-    console.error(" Error updating equity chart:", error);
-    console.error("Error details:", error.message, error.stack);
+    console.error("Error updating equity chart:", error);
 
     // Show error state
     equityChart.data.labels = ["Error loading data"];
@@ -406,137 +481,111 @@ async function updateEquityChart(query) {
   }
 }
 
-async function testEquityPoints() {
-  console.log("🧪 Testing equity points manually...");
-
-  try {
-    // Test with empty query
-    const emptyQuery = {
-      symbol: "",
-      side: "",
-      startTime: undefined,
-      endTime: undefined,
-      limit: 1000,
-      offset: 0,
-    };
-
-    console.log(" Testing with empty query:", emptyQuery);
-    const points = await Journal.GetEquityPoints(emptyQuery);
-    console.log(" Test result:", points);
-
-    return points;
-  } catch (error) {
-    console.error(" Test failed:", error);
-    return null;
-  }
-}
-
-async function debugApplyFilters() {
-  console.log(" Debug: Applying filters...");
-
-  const query = buildQueryFromFilters();
-  console.log(" Built query:", query);
-
-  try {
-    // Test equity points first
-    await testEquityPoints();
-
-    // Update chart
-    await updateEquityChart(query);
-
-    // Also update other components
-    await updateAnalytics(query);
-    await updateTradesTable(query);
-  } catch (error) {
-    console.error(" Debug apply filters failed:", error);
-  }
-}
-
-// CSV Import with improved feedback
+// CSV Import via textarea (Mac compatible)
 const importBtn = document.getElementById("import-btn");
 const importRes = document.getElementById("import-result");
+
 if (importBtn && importRes) {
   importBtn.addEventListener("click", async () => {
-    const txt = document.getElementById("csv-text")?.value || "";
-
-    if (!txt.trim()) {
-      importRes.innerHTML =
-        '<span style="color: #fc8181;">Please paste CSV data</span>';
+    const csvText = document.getElementById("csv-text")?.value || "";
+    if (!csvText.trim()) {
+      showImportResult("Please paste CSV data first", "error");
       return;
     }
 
-    importRes.innerHTML = '<span style="color: #90cdf4;">Importing...</span>';
+    // Show loading state
+    importRes.style.display = "block";
+    importRes.className = "status";
+    importRes.textContent = "Processing CSV data...";
 
     try {
-      const report = await Journal.ImportCSV(txt);
+      const report = await Journal.ImportCSV(csvText);
 
-      let resultHtml = `<strong>Import Complete:</strong><br>`;
-      resultHtml += ` Imported: ${report.imported}<br>`;
-      resultHtml += ` Skipped (duplicates): ${report.skipped}<br>`;
+      const message = `Successfully imported ${
+        report.imported
+      } trades. Skipped: ${report.skipped}, Errors: ${
+        report.errors?.length || 0
+      }`;
+      showImportResult(
+        message,
+        report.errors?.length > 0 ? "error" : "success"
+      );
 
-      if (report.errors && report.errors.length > 0) {
-        resultHtml += ` Errors: ${report.errors.length}<br>`;
-        resultHtml += `<details style="margin-top: 8px;"><summary>Show Errors</summary>`;
-        resultHtml += `<div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px;">`;
-        report.errors.forEach((error) => {
-          resultHtml += `• ${escapeHtml(error)}<br>`;
-        });
-        resultHtml += `</div></details>`;
-      }
+      // Clear textarea after successful import
+      const textArea = document.getElementById("csv-text");
+      if (textArea) textArea.value = "";
 
-      importRes.innerHTML = resultHtml;
-
-      // If import was successful, refresh the current view
-      if (report.imported > 0) {
-        setTimeout(async () => {
-          await Promise.all([
-            updateAnalytics(currentQuery),
-            updateTradesTable(currentQuery),
-          ]);
-        }, 500);
-      }
-    } catch (e) {
-      importRes.innerHTML = `<span style="color: #fc8181;">Import failed: ${escapeHtml(
-        e.message || "Unknown error"
-      )}</span>`;
+      // Refresh data after import
+      await applyFilters();
+    } catch (err) {
+      showImportResult("Import failed: " + err.message, "error");
     }
   });
 }
 
-// Load initial empty state
+function showImportResult(message, type) {
+  const resultDiv = document.getElementById("import-result");
+  if (!resultDiv) return;
+
+  resultDiv.textContent = message;
+  resultDiv.className = `status ${type}`;
+  resultDiv.style.display = "block";
+
+  // Hide after 5 seconds
+  setTimeout(() => {
+    resultDiv.style.display = "none";
+  }, 5000);
+}
+
+// Handle time events
 Events.On("time", (time) => {
   if (timeElement) {
     timeElement.innerText = time.data;
   }
 });
 
-// Auto-load trades on page load with empty filters
+// Initialize everything on page load
 document.addEventListener("DOMContentLoaded", () => {
-  console.log(" DOM Content Loaded - Starting initialization...");
+  console.log("DOM Content Loaded - Starting initialization...");
 
-  // Wait a bit for everything to load
   setTimeout(() => {
-    console.log(" Delayed initialization starting...");
-
     // Initialize chart
     initEquityChart();
 
-    // Test the connection
+    // Set default date range to last 30 days
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    const startInput = document.getElementById("filter-start");
+    const endInput = document.getElementById("filter-end");
+
+    if (startInput) startInput.value = startDate.toISOString().split("T")[0];
+    if (endInput) endInput.value = endDate.toISOString().split("T")[0];
+
+    // Test connection and load initial data
     setTimeout(async () => {
-      console.log(" Testing Journal service connection...");
+      console.log("Testing Journal service connection...");
       try {
         if (typeof Journal !== "undefined" && Journal.Ping) {
           const version = await Journal.Ping();
-          console.log(" Journal service connected, version:", version);
+          console.log("Journal service connected, version:", version);
 
-          // Test equity points
-          await testEquityPoints();
+          // Auto-load data
+          await applyFilters();
         } else {
-          console.error(" Journal service not available");
+          console.error("Journal service not available");
         }
       } catch (error) {
-        console.error(" Journal service test failed:", error);
+        console.error("Journal service test failed:", error);
       }
     }, 1000);
   }, 500);
+});
+
+// Handle window resize for chart
+window.addEventListener("resize", () => {
+  if (equityChart) {
+    equityChart.resize();
+  }
 });
